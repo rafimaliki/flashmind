@@ -1,36 +1,45 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+<div style="text-align:center">
+  <img src="img/logo.png" alt="FlashMind icon" width="120" />
+  <h1>FlashMind</h1>
+  <p style="max-width:800px;margin:0 auto;color:#555">A minimal spaced-repetition flashcard app powered by Markdown files.</p>
+  <img src="img/screenshot.png" alt="Preview screenshot" style="max-width:100%;height:auto;border:1px solid #eaeaea;margin-top:16px;" />
+</div>
+
+<br>
+
+<div style="text-align:justify">
+  FlashMind is an app for studying with spaced-repetition flashcards generated from your Markdown files. Point the app at one or more directories containing Markdown notes and those files will be used as card inputs for study sessions.
+</div>
+
+## Features
+
+- Set one or more directories of Markdown files as card inputs
+- Spaced-repetition study sessions
+- Simple, clean UI with Markdown rendering
 
 ## Getting Started
 
-First, run the development server:
+Prerequisites: Node.js (recommended v18+)
+
+Clone, install, and run:
+
+```bash
+git clone <repository-url>
+cd flashmind
+npm install
+```
+
+Run in development:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Build for production and start:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+npm run build
+npm run start
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+_\*100% vibecoded_
