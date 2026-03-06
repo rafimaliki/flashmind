@@ -1,0 +1,14 @@
+{
+  "modes": {
+    "memory": {
+      "directories": [
+        "C:\\Files\\Source-Code\\Non-Kuliah\\Notes-App\\my-memo\\1 - References"
+      ]
+    },
+    "leetcode": {
+      "directories": [
+        "C:\\Files\\Source-Code\\Non-Kuliah\\Notes-App\\my-memo\\2 - Leetcode"
+      ]
+    }
+  }
+}
