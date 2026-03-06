@@ -2,6 +2,8 @@
 
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
+import { oneDark } from "react-syntax-highlighter/dist/esm/styles/prism";
 
 interface Props {
   content: string;
@@ -64,19 +66,34 @@ export default function MarkdownRenderer({ content }: Props) {
             </blockquote>
           ),
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          pre: ({ children }: any) => (
-            <pre className="bg-zinc-950 rounded-xl p-4 overflow-x-auto mb-4 text-sm leading-relaxed">
-              {children}
-            </pre>
-          ),
+          pre: ({ children }: any) => <>{children}</>,
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           code: ({ children, className }: any) => {
-            const isBlock = !!className || String(children).includes("\n");
+            const match = /language-(\w+)/.exec(className ?? "");
+            if (match) {
+              return (
+                <SyntaxHighlighter
+                  language={match[1]}
+                  style={oneDark}
+                  customStyle={{
+                    borderRadius: "0.75rem",
+                    marginBottom: "1rem",
+                    fontSize: "0.875rem",
+                    lineHeight: "1.625",
+                  }}
+                  wrapLongLines={false}
+                >
+                  {String(children).replace(/\n$/, "")}
+                </SyntaxHighlighter>
+              );
+            }
+            // plain inline code or untagged block
+            const isBlock = String(children).includes("\n");
             if (isBlock) {
               return (
-                <code className={`font-mono text-zinc-200 ${className ?? ""}`}>
-                  {children}
-                </code>
+                <pre className="bg-zinc-950 rounded-xl p-4 overflow-x-auto mb-4 text-sm leading-relaxed">
+                  <code className="font-mono text-zinc-200">{children}</code>
+                </pre>
               );
             }
             return (

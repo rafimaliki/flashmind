@@ -84,9 +84,9 @@ export default function StudyCard({
               <span
                 className={`text-xs font-medium ${MODE_META[mode].color} flex items-center gap-1`}
               >
-                <span className="material-icons-round text-xs leading-none">
+                {/* <span className="material-icons-round text-xs leading-none">
                   {MODE_META[mode].iconName}
-                </span>
+                </span> */}
                 <span>{MODE_META[mode].label}</span>
               </span>
             </div>

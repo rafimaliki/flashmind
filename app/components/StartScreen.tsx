@@ -54,9 +54,9 @@ export default function StartScreen({
       {savedSession && (
         <div className="w-full max-w-sm mb-4 bg-indigo-950/50 border border-indigo-800/60 rounded-2xl p-5">
           <div className="flex items-center gap-2 mb-1">
-            <span className="material-icons-round text-indigo-400 text-base">
+            {/* <span className="material-icons-round text-indigo-400 text-base">
               play_circle
-            </span>
+            </span> */}
             <span className="text-sm font-semibold text-indigo-300">
               Session in progress
             </span>
@@ -118,7 +118,7 @@ export default function StartScreen({
               newCount={mem.newCount}
               total={mem.total}
               configured={mem.hasDirectories}
-              accentClass="text-indigo-400"
+              accentClass="text-white"
             />
             <div className="border-t border-zinc-800/60 my-4" />
             <ModeRow
@@ -130,7 +130,7 @@ export default function StartScreen({
               newCount={lc.newCount}
               total={lc.total}
               configured={lc.hasDirectories}
-              accentClass="text-violet-400"
+              accentClass="text-white"
             />
             <div className="border-t border-zinc-800 mt-5 pt-4 grid grid-cols-3 gap-2">
               <StatBox
@@ -212,9 +212,9 @@ function ModeRow({
       {/* Header row */}
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">
-          <span className={`material-icons-round text-base ${accentClass}`}>
+          {/* <span className={`material-icons-round text-base ${accentClass}`}>
             {iconName}
-          </span>
+          </span> */}
           <span className="text-sm font-semibold text-zinc-200">{label}</span>
         </div>
         {configured && (
