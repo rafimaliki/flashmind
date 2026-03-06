@@ -10,6 +10,8 @@ import {
 import { ProgressData, SessionCard, AppConfig, Mode } from "@/lib/types";
 import { isDue, getPriority, createNewCard } from "@/lib/spacedRepetition";
 
+export const dynamic = "force-dynamic";
+
 const DEFAULT_CONFIG: AppConfig = {
   modes: {
     memory: { directories: [] },
@@ -21,7 +23,15 @@ function loadConfig(): AppConfig {
   try {
     if (!fs.existsSync(CONFIG_PATH)) return DEFAULT_CONFIG;
     const raw = fs.readFileSync(CONFIG_PATH, "utf-8");
-    return JSON.parse(raw) as AppConfig;
+    const parsed = JSON.parse(raw);
+    if (
+      !Array.isArray(parsed?.modes?.memory?.directories) ||
+      !Array.isArray(parsed?.modes?.leetcode?.directories)
+    ) {
+      console.warn("[config] corrupt or invalid shape — using defaults");
+      return DEFAULT_CONFIG;
+    }
+    return parsed as AppConfig;
   } catch {
     return DEFAULT_CONFIG;
   }
@@ -46,7 +56,16 @@ function loadProgress(): ProgressData {
   try {
     if (!fs.existsSync(DATA_PATH)) return { cards: {} };
     const raw = fs.readFileSync(DATA_PATH, "utf-8");
-    return JSON.parse(raw) as ProgressData;
+    const parsed = JSON.parse(raw);
+    if (
+      !parsed?.cards ||
+      typeof parsed.cards !== "object" ||
+      Array.isArray(parsed.cards)
+    ) {
+      console.warn("[progress] corrupt or invalid shape — using empty");
+      return { cards: {} };
+    }
+    return parsed as ProgressData;
   } catch {
     return { cards: {} };
   }

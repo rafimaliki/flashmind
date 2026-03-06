@@ -13,25 +13,32 @@ interface Props {
   onStart: () => void;
   onResume: () => void;
   onOpenSettings: () => void;
-  isLoading: boolean;
+  isStarting: boolean;
+  isStatsLoading: boolean;
   stats: Record<Mode, ModeStats>;
   savedSession: SessionSnapshot | null;
+  fetchError?: boolean;
+  onRetry?: () => void;
 }
 
 export default function StartScreen({
   onStart,
   onResume,
   onOpenSettings,
-  isLoading,
+  isStarting,
+  isStatsLoading,
   stats,
   savedSession,
+  fetchError,
+  onRetry,
 }: Props) {
   const mem = stats.memory;
   const lc = stats.leetcode;
   const totalDue = mem.dueCount + lc.dueCount;
   const hasAny = mem.hasDirectories || lc.hasDirectories;
-  const nothingDue = !isLoading && totalDue === 0 && hasAny;
-  const notConfigured = !isLoading && !hasAny;
+  // Only lock the button on confirmed fresh data — never during loading
+  const nothingDue = !isStatsLoading && totalDue === 0 && hasAny;
+  const notConfigured = !isStatsLoading && !hasAny;
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-zinc-950 px-6 py-10">
@@ -81,7 +88,7 @@ export default function StartScreen({
             </button>
             <button
               onClick={onStart}
-              disabled={isLoading || notConfigured}
+              disabled={isStarting || notConfigured}
               className="flex-1 py-2.5 text-sm font-medium rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-300 border border-zinc-700 transition-colors active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed"
             >
               Start Fresh
@@ -96,7 +103,22 @@ export default function StartScreen({
           Today&apos;s Session
         </h2>
 
-        {isLoading ? (
+        {fetchError ? (
+          <div className="py-6 text-center">
+            <p className="text-sm text-red-400">Could not reach the server.</p>
+            <p className="text-xs text-zinc-600 mt-1 mb-4">
+              Check that the dev server is running.
+            </p>
+            {onRetry && (
+              <button
+                onClick={onRetry}
+                className="px-4 py-2 text-xs font-semibold rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-300 border border-zinc-700 transition-colors"
+              >
+                Retry
+              </button>
+            )}
+          </div>
+        ) : isStatsLoading ? (
           <div className="flex items-center justify-center py-8">
             <div className="w-5 h-5 border-2 border-zinc-700 border-t-zinc-400 rounded-full animate-spin" />
           </div>
@@ -160,10 +182,10 @@ export default function StartScreen({
       {!savedSession && (
         <button
           onClick={onStart}
-          disabled={isLoading || nothingDue || notConfigured}
+          disabled={isStarting || nothingDue || notConfigured}
           className="w-full max-w-sm py-4 text-base font-semibold rounded-xl transition-all duration-150 bg-indigo-500 text-white shadow-md active:scale-[0.98] hover:bg-indigo-400 disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none mb-3"
         >
-          {isLoading
+          {isStarting
             ? "Loading…"
             : notConfigured
               ? "Configure First"

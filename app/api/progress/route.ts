@@ -5,22 +5,38 @@ import { DATA_PATH } from "@/lib/config";
 import { ProgressData, Rating } from "@/lib/types";
 import { updateCard, createNewCard } from "@/lib/spacedRepetition";
 
+export const dynamic = "force-dynamic";
+
 function loadProgress(): ProgressData {
   try {
     if (!fs.existsSync(DATA_PATH)) return { cards: {} };
     const raw = fs.readFileSync(DATA_PATH, "utf-8");
-    return JSON.parse(raw) as ProgressData;
+    const parsed = JSON.parse(raw);
+    if (
+      !parsed?.cards ||
+      typeof parsed.cards !== "object" ||
+      Array.isArray(parsed.cards)
+    ) {
+      console.warn("[progress] corrupt or invalid shape — using empty");
+      return { cards: {} };
+    }
+    return parsed as ProgressData;
   } catch {
     return { cards: {} };
   }
 }
 
 function saveProgress(data: ProgressData): void {
-  const dir = path.dirname(DATA_PATH);
-  if (!fs.existsSync(dir)) {
-    fs.mkdirSync(dir, { recursive: true });
+  try {
+    const dir = path.dirname(DATA_PATH);
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+    fs.writeFileSync(DATA_PATH, JSON.stringify(data, null, 2), "utf-8");
+  } catch (err) {
+    console.error("[progress] failed to write progress.json:", err);
+    throw err;
   }
-  fs.writeFileSync(DATA_PATH, JSON.stringify(data, null, 2), "utf-8");
 }
 
 export async function POST(request: NextRequest) {
@@ -43,7 +59,14 @@ export async function POST(request: NextRequest) {
   const existing = progress.cards[cardId] ?? createNewCard(filePath);
   const updated = updateCard(existing, rating);
   progress.cards[cardId] = updated;
-  saveProgress(progress);
+  try {
+    saveProgress(progress);
+  } catch {
+    return NextResponse.json(
+      { error: "Failed to write progress" },
+      { status: 500 },
+    );
+  }
 
   return NextResponse.json({ success: true, card: updated });
 }

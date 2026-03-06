@@ -44,9 +44,45 @@ function loadSession(): SessionSnapshot | null {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return null;
     const snap = JSON.parse(raw) as SessionSnapshot;
+    if (
+      !Array.isArray(snap?.cards) ||
+      typeof snap.currentIndex !== "number" ||
+      typeof snap.sessionStats?.easy !== "number"
+    ) {
+      localStorage.removeItem(STORAGE_KEY);
+      return null;
+    }
     if (snap.currentIndex >= snap.cards.length) return null;
     return snap;
   } catch {
+    localStorage.removeItem(STORAGE_KEY);
+    return null;
+  }
+}
+
+const STATS_KEY = "flashbrain_stats_v2";
+
+function saveStatsCache(stats: Record<Mode, ModeStats>): void {
+  try {
+    localStorage.setItem(STATS_KEY, JSON.stringify(stats));
+  } catch {}
+}
+
+function loadStatsCache(): Record<Mode, ModeStats> | null {
+  try {
+    const raw = localStorage.getItem(STATS_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as Record<Mode, ModeStats>;
+    if (
+      typeof parsed?.memory?.dueCount !== "number" ||
+      typeof parsed?.leetcode?.dueCount !== "number"
+    ) {
+      localStorage.removeItem(STATS_KEY);
+      return null;
+    }
+    return parsed;
+  } catch {
+    localStorage.removeItem(STATS_KEY);
     return null;
   }
 }
@@ -75,7 +111,9 @@ export default function Home() {
     medium: 0,
     hard: 0,
   });
-  const [isLoading, setIsLoading] = useState(true);
+  const [isStarting, setIsStarting] = useState(false);
+  const [isStatsLoading, setIsStatsLoading] = useState(false);
+  const [fetchError, setFetchError] = useState(false);
   const [stats, setStats] = useState<Record<Mode, ModeStats>>({
     memory: DEFAULT_STATS,
     leetcode: DEFAULT_STATS,
@@ -87,20 +125,31 @@ export default function Home() {
   );
 
   const fetchStats = useCallback(async () => {
-    setIsLoading(true);
+    setFetchError(false);
+    setIsStatsLoading(true);
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 10_000);
     try {
       const [configRes, memRes, lcRes] = await Promise.all([
-        fetch("/api/config"),
-        fetch("/api/cards?mode=memory&statsOnly=true"),
-        fetch("/api/cards?mode=leetcode&statsOnly=true"),
+        fetch("/api/config", { signal: controller.signal, cache: "no-store" }),
+        fetch("/api/cards?mode=memory&statsOnly=true", {
+          signal: controller.signal,
+          cache: "no-store",
+        }),
+        fetch("/api/cards?mode=leetcode&statsOnly=true", {
+          signal: controller.signal,
+          cache: "no-store",
+        }),
       ]);
       const [configData, memData, lcData] = await Promise.all([
         configRes.json(),
         memRes.json(),
         lcRes.json(),
       ]);
+
+      console.log("Fetched config:", configData);
       setAppConfig(configData);
-      setStats({
+      const newStats: Record<Mode, ModeStats> = {
         memory: {
           total: memData.total ?? 0,
           dueCount: memData.dueCount ?? 0,
@@ -115,16 +164,36 @@ export default function Home() {
           reviewCount: lcData.reviewCount ?? 0,
           hasDirectories: lcData.hasDirectories ?? false,
         },
-      });
+      };
+      setStats(newStats);
+      saveStatsCache(newStats);
+    } catch (err) {
+      if ((err as Error).name !== "AbortError") {
+        console.error("[fetchStats] failed:", err);
+      }
+      setFetchError(true);
     } finally {
-      setIsLoading(false);
+      clearTimeout(timeout);
+      setIsStatsLoading(false);
     }
   }, []);
 
   useEffect(() => {
+    // evict old cache key from previous versions
+    try {
+      localStorage.removeItem("flashbrain_stats");
+    } catch {}
     const snap = loadSession();
     setSavedSession(snap);
-    fetchStats();
+    const cached = loadStatsCache();
+    if (cached) {
+      setStats(cached);
+      // silently refresh in background — no spinner
+      fetchStats();
+    } else {
+      // first visit / cache miss: show spinner until fetch completes
+      fetchStats();
+    }
   }, [fetchStats]);
 
   const handleResume = () => {
@@ -136,11 +205,11 @@ export default function Home() {
   };
 
   const handleStart = async () => {
-    setIsLoading(true);
+    setIsStarting(true);
     try {
       const [memRes, lcRes] = await Promise.all([
-        fetch("/api/cards?mode=memory&limit=15"),
-        fetch("/api/cards?mode=leetcode&limit=5"),
+        fetch("/api/cards?mode=memory&limit=15", { cache: "no-store" }),
+        fetch("/api/cards?mode=leetcode&limit=5", { cache: "no-store" }),
       ]);
       const [memData, lcData] = await Promise.all([
         memRes.json(),
@@ -159,7 +228,7 @@ export default function Home() {
       setSessionStats(initStats);
       setState("studying");
     } finally {
-      setIsLoading(false);
+      setIsStarting(false);
     }
   };
 
@@ -192,7 +261,7 @@ export default function Home() {
     clearSession();
     setSavedSession(null);
     setState("start");
-    await fetchStats();
+    fetchStats();
   };
 
   const handleSaveConfig = async (newConfig: AppConfig) => {
@@ -202,7 +271,21 @@ export default function Home() {
       body: JSON.stringify(newConfig),
     });
     setAppConfig(newConfig);
-    await fetchStats();
+    fetchStats();
+  };
+
+  const handleOpenSettings = async () => {
+    // Always fetch fresh config before opening settings to avoid stale state wiping saved dirs
+    try {
+      const res = await fetch("/api/config", { cache: "no-store" });
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data?.modes?.memory?.directories)) {
+          setAppConfig(data);
+        }
+      }
+    } catch {}
+    setShowSettings(true);
   };
 
   if (state === "start") {
@@ -211,10 +294,13 @@ export default function Home() {
         <StartScreen
           onStart={handleStart}
           onResume={handleResume}
-          onOpenSettings={() => setShowSettings(true)}
-          isLoading={isLoading}
+          onOpenSettings={handleOpenSettings}
+          isStarting={isStarting}
+          isStatsLoading={isStatsLoading}
           stats={stats}
           savedSession={savedSession}
+          fetchError={fetchError}
+          onRetry={fetchStats}
         />
         {showSettings && (
           <DirectoryConfig
