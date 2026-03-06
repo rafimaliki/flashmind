@@ -30,7 +30,7 @@ Prerequisites: Node.js (recommended v18+)
 Clone, install, and run:
 
 ```bash
-git clone <repository-url>
+git clone https://github.com/rafimaliki/flashmind
 cd flashmind
 npm install
 ```
