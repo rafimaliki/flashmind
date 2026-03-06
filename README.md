@@ -1,10 +1,16 @@
-<div style="text-align:center">
-  <img src="img/logo.png" alt="FlashMind icon" width="120" />
-  <h1>FlashMind</h1>
-  <p style="max-width:800px;margin:0 auto;color:#555">A minimal spaced-repetition flashcard app powered by Markdown files.</p>
-  <img src="img/screenshot.png" alt="Preview screenshot" style="max-width:100%;height:auto;border:1px solid #eaeaea;margin-top:16px;" />
-</div>
+<p align="center">
+  <img src="img/logo.png" width="120" />
+</p>
 
+<h1 align="center">FlashMind</h1>
+
+<p align="center">
+  A minimal spaced-repetition flashcard app powered by Markdown files.
+</p>
+
+<p align="center">
+  <img src="img/screenshot.png" width="900"/>
+</p>
 <br>
 
 <div style="text-align:justify">
